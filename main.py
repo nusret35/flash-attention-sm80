@@ -4,7 +4,7 @@ import torch.nn.functional as F
 
 flash_module = load(
     name="flash_attn_v1",
-    sources=["agent_space/flash_fwd_v1_sm80.cu"],
+    sources=["./flash_fwd_sm80.cu"],
     extra_cuda_cflags=["-arch=sm_89"],
 )
 
