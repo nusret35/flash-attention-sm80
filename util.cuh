@@ -65,6 +65,13 @@ __global__ void softmax_stored_locally_mutli_dim(const half4 *input,
         buf[pack_id].w = -INFINITY;
       }
     }
+#pragma unroll
+    for (int i = 0; i < num_packs; i++) {
+      local_max[0] = max(local_max[0], buf[i].x);
+      local_max[0] = max(local_max[0], buf[i].y);
+      local_max[0] = max(local_max[0], buf[i].z);
+      local_max[0] = max(local_max[0], buf[i].w);
+    }
     warpReduceMax<float, 1>(local_max, blockDim.x);
 
     float local_sum[1] = {0.0f};
