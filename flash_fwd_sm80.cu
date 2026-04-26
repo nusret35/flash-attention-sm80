@@ -31,7 +31,11 @@ torch::Tensor softmax_forward(torch::Tensor input) {
   return output;
 }
 
-torch::Tensor forward(torch::Tensor q, torch::Tensor k, torch::Tensor v) {}
+torch::Tensor forward(torch::Tensor q, torch::Tensor k, torch::Tensor v) {
+  auto output = torch::zeros_like(q);
+  // TODO: implement flash_fwd_kernel and launch it here
+  return output;
+}
 
 PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
   m.def("forward", &forward, "Flash attention forward");
