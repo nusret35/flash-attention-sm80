@@ -25,6 +25,6 @@ v_t = v.transpose(1, 2)
 ref = F.scaled_dot_product_attention(q_t, k_t, v_t).transpose(1, 2)
 
 # Your kernel
-out = flash_module.softmax_forward(q, k, v)
+out = flash_module.softmax(q, k, v)
 
 print(f"max diff: {(ref - out).abs().max().item()}")

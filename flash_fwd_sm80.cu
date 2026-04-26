@@ -1,5 +1,6 @@
-#include "util.cuh"
 #include <torch/extension.h>
+
+#include "util.cuh"
 
 __global__ void flash_fwd_kernel() {}
 
@@ -15,8 +16,8 @@ torch::Tensor softmax_forward(torch::Tensor input) {
   dim3 block(32, 1);
   dim3 grid(m);
 
-  auto *in_ptr = (const half4 *)input.data_ptr<at::Half>();
-  auto *out_ptr = (half4 *)output.data_ptr<at::Half>();
+  auto* in_ptr = (const half4*)input.data_ptr<at::Half>();
+  auto* out_ptr = (half4*)output.data_ptr<at::Half>();
 
   int cpt = n / 32;
   if (cpt == 4) {
