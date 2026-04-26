@@ -6,6 +6,7 @@ flash_module = load(
     name="flash_attn_v1",
     sources=["./flash_fwd_sm80.cu"],
     extra_cuda_cflags=["-arch=sm_89"],
+    extra_include_paths=["/usr/include/python3.11"]
 )
 
 # Phase 1 test - small, fixed, reproducible
