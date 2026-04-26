@@ -6,7 +6,7 @@ flash_module = load(
     name="flash_attn_v1",
     sources=["./flash_fwd_sm80.cu"],
     extra_cuda_cflags=["-arch=sm_89"],
-    extra_include_paths=["/usr/include/python3.11"]
+    extra_include_paths=["/usr/include/python3.11"],
 )
 
 # Phase 1 test - small, fixed, reproducible
@@ -25,6 +25,6 @@ v_t = v.transpose(1, 2)
 ref = F.scaled_dot_product_attention(q_t, k_t, v_t).transpose(1, 2)
 
 # Your kernel
-out = flash_module.forward(q, k, v)
+out = flash_module.softmax_forward(q, k, v)
 
 print(f"max diff: {(ref - out).abs().max().item()}")
