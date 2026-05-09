@@ -31,5 +31,5 @@ k_t = k.transpose(1, 2)
 v_t = v.transpose(1, 2)
 ref = F.scaled_dot_product_attention(q_t, k_t, v_t).transpose(1, 2)
 
-out = flash_module.vanilla_attention(q, k, v)
-print(f"vanilla_attention max diff: {(ref - out).abs().max().item()}")
+out = flash_module.vanilla_attention(q.float(), k.float(), v.float())
+print(f"vanilla_attention max diff: {(ref - out.half()).abs().max().item()}")
