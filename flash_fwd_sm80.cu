@@ -70,17 +70,18 @@ torch::Tensor softmax_forward(torch::Tensor input)
 
 torch::Tensor vanilla_attention(torch::Tensor q, torch::Tensor k, torch::Tensor v)
 {
-  // q, k, v: (batch, nheads, seqlen, hdim) - contiguous float32
-  int seqlen = q.size(2);
+  // q, k, v: (batch, seqlen, nheads, hdim) - contiguous float32
+  int seqlen = q.size(1);
   int hdim = q.size(3);
 
   // Step 1: S = Q @ K^T  → (seqlen × seqlen)
   auto scores = torch::empty({seqlen, seqlen}, q.options());
+  auto kt = k.transpose(1, 3).contiguous(); // (batch, hdim, nheads, seqlen) → treat as (hdim × seqlen)
 
   dim3 block(TILE, TILE);
   dim3 grid1((seqlen + TILE - 1) / TILE, (seqlen + TILE - 1) / TILE);
   matmul_tiled<<<grid1, block>>>(
-      q.data_ptr<float>(), k.data_ptr<float>(), scores.data_ptr<float>(),
+      q.data_ptr<float>(), kt.data_ptr<float>(), scores.data_ptr<float>(),
       seqlen, seqlen, hdim);
 
   // Step 2: scale by 1/sqrt(d)
