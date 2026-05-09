@@ -51,7 +51,11 @@ torch::Tensor softmax_forward(torch::Tensor input)
   auto *out_ptr = (float4 *)output.data_ptr<float>();
 
   int cpt = n / 32;
-  if (cpt == 4)
+  if (cpt == 2)
+  {
+    softmax_stored_locally_mutli_dim<2><<<grid, block>>>(in_ptr, out_ptr, m, n);
+  }
+  else if (cpt == 4)
   {
     softmax_stored_locally_mutli_dim<4><<<grid, block>>>(in_ptr, out_ptr, m, n);
   }
