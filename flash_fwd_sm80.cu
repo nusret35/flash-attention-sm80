@@ -17,12 +17,12 @@ __global__ void matmul_tiled(const float *A, const float *B, float *C,
   for (int t = 0; t < (K + TILE - 1) / TILE; t++)
   {
     if ((row < M) && ((t * TILE + threadIdx.x) < N))
-      sh_A[threadIdx.y][threadIdx.x] = sh_A[row * K + t * TILE + threadIdx.x];
+      sh_A[threadIdx.y][threadIdx.x] = A[row * K + t * TILE + threadIdx.x];
     else
       sh_A[threadIdx.y][threadIdx.x] = 0.0f;
 
     if (((t * TILE + threadIdx.y) < N) && (col < K))
-      sh_B[threadIdx.y][threadIdx.x] = sh_B[(t * TILE + threadIdx.y) * N + col];
+      sh_B[threadIdx.y][threadIdx.x] = B[(t * TILE + threadIdx.y) * N + col];
     else
       sh_B[threadIdx.y][threadIdx.x] = 0.0f;
 
