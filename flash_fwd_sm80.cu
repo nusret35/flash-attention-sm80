@@ -47,8 +47,8 @@ torch::Tensor softmax_forward(torch::Tensor input)
   dim3 block(32, 1);
   dim3 grid(m);
 
-  auto *in_ptr = (const half4 *)input.data_ptr<at::Half>();
-  auto *out_ptr = (half4 *)output.data_ptr<at::Half>();
+  auto *in_ptr = (const float4 *)input.data_ptr<float>();
+  auto *out_ptr = (float4 *)output.data_ptr<float>();
 
   int cpt = n / 32;
   if (cpt == 4)

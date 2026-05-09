@@ -16,8 +16,8 @@ batch, seqlen, nheads, hdim = 1, 64, 1, 64
 dtype = torch.float16
 
 # Test softmax - needs 2D tensor, cols must be 128/256/512 (n/32 = 4/8/16)
-x = torch.randn(4, 128, device="cuda", dtype=dtype)
-ref_softmax = torch.softmax(x.float(), dim=-1).half()
+x = torch.randn(4, 128, device="cuda", dtype=torch.float32)
+ref_softmax = torch.softmax(x, dim=-1)
 out_softmax = flash_module.softmax(x)
 print(f"softmax max diff: {(ref_softmax - out_softmax).abs().max().item()}")
 
