@@ -9,10 +9,17 @@ flash_module = load(
     extra_include_paths=["/usr/include/python3.11"],
 )
 
+
 # Phase 1 test - small, fixed, reproducible
 torch.manual_seed(42)
 batch, seqlen, nheads, hdim = 1, 64, 1, 64
 dtype = torch.float16
+
+# Test softmax - needs 2D tensor, cols must be 128/256/512 (n/32 = 4/8/16)
+x = torch.randn(4, 128, device="cuda", dtype=dtype)
+ref_softmax = torch.softmax(x.float(), dim=-1).half()
+out_softmax = flash_module.softmax(x)
+print(f"softmax max diff: {(ref_softmax - out_softmax).abs().max().item()}")
 
 q = torch.randn(batch, seqlen, nheads, hdim, device="cuda", dtype=dtype)
 k = torch.randn(batch, seqlen, nheads, hdim, device="cuda", dtype=dtype)
@@ -24,11 +31,5 @@ k_t = k.transpose(1, 2)
 v_t = v.transpose(1, 2)
 ref = F.scaled_dot_product_attention(q_t, k_t, v_t).transpose(1, 2)
 
-# out = flash_module.forward(q, k, v)
-# print(f"attention max diff: {(ref - out).abs().max().item()}")
-
-# Test softmax - needs 2D tensor, cols must be 128/256/512 (n/32 = 4/8/16)
-x = torch.randn(4, 128, device="cuda", dtype=dtype)
-ref_softmax = torch.softmax(x.float(), dim=-1).half()
-out_softmax = flash_module.softmax(x)
-print(f"softmax max diff: {(ref_softmax - out_softmax).abs().max().item()}")
+out = flash_module.vanilla_attention(q, k, v)
+print(f"vanilla_attention max diff: {(ref - out).abs().max().item()}")
