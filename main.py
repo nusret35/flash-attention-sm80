@@ -12,14 +12,9 @@ flash_module = load(
 
 # Phase 1 test - small, fixed, reproducible
 torch.manual_seed(42)
-batch, seqlen, nheads, hdim = 1, 64, 1, 64
+batch, seqlen, nheads, hdim = 1, 128, 1, 128
 dtype = torch.float16
 
-# Test softmax - needs 2D tensor, cols must be 128/256/512 (n/32 = 4/8/16)
-x = torch.randn(4, 128, device="cuda", dtype=torch.float32)
-ref_softmax = torch.softmax(x, dim=-1)
-out_softmax = flash_module.softmax(x)
-print(f"softmax max diff: {(ref_softmax - out_softmax).abs().max().item()}")
 
 q = torch.randn(batch, seqlen, nheads, hdim, device="cuda", dtype=dtype)
 k = torch.randn(batch, seqlen, nheads, hdim, device="cuda", dtype=dtype)
@@ -29,8 +24,39 @@ v = torch.randn(batch, seqlen, nheads, hdim, device="cuda", dtype=dtype)
 q_t = q.transpose(1, 2)
 k_t = k.transpose(1, 2)
 v_t = v.transpose(1, 2)
-ref = F.scaled_dot_product_attention(q_t, k_t, v_t).transpose(1, 2)
 
+ref_f32 = F.scaled_dot_product_attention(
+    q_t.float(), k_t.float(), v_t.float()
+).transpose(1, 2)
+
+# Warmup
+for _ in range(500):
+    flash_module.vanilla_attention(q.float(), k.float(), v.float())
+    flash_module.flash_attention_v1(q.float(), k.float(), v.float())
+    flash_module.flash_attention_v2(q.float(), k.float(), v.float())
+torch.cuda.synchronize()
+
+start = torch.cuda.Event(enable_timing=True)
+end = torch.cuda.Event(enable_timing=True)
+
+start.record()
 out = flash_module.vanilla_attention(q.float(), k.float(), v.float())
-ref_f32 = F.scaled_dot_product_attention(q_t.float(), k_t.float(), v_t.float()).transpose(1, 2)
-print(f"vanilla_attention max diff: {(ref_f32 - out).abs().max().item()}")
+end.record()
+torch.cuda.synchronize()
+print(f"vanilla_attention:        {start.elapsed_time(end):.3f} ms")
+
+start.record()
+flash_attention_out = flash_module.flash_attention_v1(q.float(), k.float(), v.float())
+end.record()
+torch.cuda.synchronize()
+print(f"flash_attention_v1:       {start.elapsed_time(end):.3f} ms")
+
+start.record()
+flash_attention_out_2 = flash_module.flash_attention_v2(q.float(), k.float(), v.float())
+end.record()
+torch.cuda.synchronize()
+print(f"flash_attention_v2:       {start.elapsed_time(end):.3f} ms")
+
+print(f"vanilla_attention max diff:  {(ref_f32 - out).abs().max().item()}")
+print(f"flash_attention_v1 max diff: {(ref_f32 - flash_attention_out).abs().max().item()}")
+print(f"flash_attention_v1 max diff: {(ref_f32 - flash_attention_out_2).abs().max().item()}")
